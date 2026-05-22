@@ -8,15 +8,11 @@ async function evaluateCodeStep(args) {
     "BIZ ADDRESS NO MATCH":   10,
     "BRV AP MATCH NOT FOUND": 15,
   };
-
-  // Forced High Risk regardless of numeric score
   const FORCE_HIGH_RISK = new Set([
-    "UBO PEP HIT CONFIRMED",
+    "UBO PEP CONFIRMED",
     "UBO ADVERSE MEDIA CONFIRMED",
     "FAILED BRV VERIFIED",
   ]);
-
-  // Forced Prohibited regardless of numeric score — requires BSA Officer escalation
   const PROHIBITED_OVERRIDES = new Set([
     "OFAC HIT",
     "OFAC CONFIRMED",
@@ -24,17 +20,15 @@ async function evaluateCodeStep(args) {
     "WATCHLIST MATCH",
     "TF TYPOLOGY CONFIRMED",
   ]);
-
   const HIGH_RISK_COUNTRIES = new Set([
-    "IR", "KP", "CU", "SY", "RU", "BY", "MM", "VE",
+    "IR", "KP", "CU", "SY", "RU", "BY", "MM", "VE", "CN",
   ]);
-
   const ELEVATED_STATES = new Set([
     "CA", "CO", "OR", "WA", "NV", "MI", "IL",
   ]);
 
   // Matched against nature_of_business field (case-insensitive phrase match).
-  // Prohibited keywords are checked before high-risk to ensure more specific
+  // Prohibited keywords are checked before high-risk so that more specific
   // phrases (e.g. "escort agency") take precedence over shorter overlapping terms.
   const PROHIBITED_INDUSTRY_KEYWORDS = [
     "casino", "gambling establishment", "sportsbook", "wagering establishment",
@@ -85,13 +79,11 @@ async function evaluateCodeStep(args) {
   const account = accountsList && accountsList.data && accountsList.data[0];
   if (!account) throw new Error("No account found for case " + caseId);
 
-  const tags   = account && account.attributes && account.attributes.tags || [];
-  const fields = account && account.attributes && account.attributes.fields || {};
+  const tags    = account && account.attributes && account.attributes.tags || [];
+  const state   = account && account.attributes && account.attributes.fields && account.attributes.fields.business_physical_address && account.attributes.fields.business_physical_address.value && account.attributes.fields.business_physical_address.value.subdivision && account.attributes.fields.business_physical_address.value.subdivision.value || "";
+  const country = account && account.attributes && account.attributes.fields && account.attributes.fields.business_physical_address && account.attributes.fields.business_physical_address.value && account.attributes.fields.business_physical_address.value.country_code && account.attributes.fields.business_physical_address.value.country_code.value || "";
 
-  const state   = fields.business_physical_address && fields.business_physical_address.value && fields.business_physical_address.value.subdivision  && fields.business_physical_address.value.subdivision.value   || "";
-  const country = fields.business_physical_address && fields.business_physical_address.value && fields.business_physical_address.value.country_code  && fields.business_physical_address.value.country_code.value  || "";
-
-  const natureOfBusiness = (fields.nature_of_business && fields.nature_of_business.value || "").toLowerCase();
+  const natureOfBusiness = (account && account.attributes && account.attributes.fields && account.attributes.fields.nature_of_business && account.attributes.fields.nature_of_business.value || "").toLowerCase();
 
   // --- Helper: case-insensitive phrase match, returns first matched keyword ---
   function matchesKeyword(text, keywords) {
@@ -101,7 +93,7 @@ async function evaluateCodeStep(args) {
     return null;
   }
 
-  // --- Prohibited check: tags ---
+  // --- Prohibited check ---
   var prohibitedTag = null;
   for (var i = 0; i < tags.length; i++) {
     if (PROHIBITED_OVERRIDES.has(tags[i])) { prohibitedTag = tags[i]; break; }
@@ -115,7 +107,6 @@ async function evaluateCodeStep(args) {
     };
   }
 
-  // --- Prohibited check: nature of business industry keywords ---
   var prohibitedKeyword = matchesKeyword(natureOfBusiness, PROHIBITED_INDUSTRY_KEYWORDS);
   if (prohibitedKeyword) {
     return {
