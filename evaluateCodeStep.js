@@ -113,7 +113,7 @@ async function evaluateCodeStep(args) {
       risk_score:      999,
       risk_tier:       "Prohibited",
       requires_review: true,
-      triggered_by:    "Industry keyword: " + prohibitedKeyword,
+      triggered_by:    "Industry: " + prohibitedKeyword,
     };
   }
 
@@ -151,6 +151,6 @@ async function evaluateCodeStep(args) {
     risk_score:      score,
     risk_tier:       risk_tier,
     requires_review: risk_tier === "High Risk",
-    ...(highRiskKeyword && { triggered_by: "Industry keyword: " + highRiskKeyword }),
+    ...(highRiskKeyword && { triggered_by: "Industry: " + highRiskKeyword }),
   };
 }
