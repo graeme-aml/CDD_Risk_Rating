@@ -28,9 +28,9 @@ async function evaluateCodeStep(args) {
   ]);
 
   // Matched against nature_of_business field (case-insensitive phrase match).
-  // Prohibited keywords are checked before high-risk so that more specific
-  // phrases (e.g. "escort agency") take precedence over shorter overlapping terms.
-  const PROHIBITED_INDUSTRY_KEYWORDS = [
+  // Prohibited is checked before high-risk so that more specific phrases
+  // (e.g. "escort agency") take precedence over shorter overlapping terms.
+  const PROHIBITED_INDUSTRY = [
     "casino", "gambling establishment", "sportsbook", "wagering establishment",
     "lottery operator", "online casino", "online gambling platform",
     "racetrack", "horse racing", "dog racing",
@@ -40,7 +40,7 @@ async function evaluateCodeStep(args) {
     "prepaid telecom", "prepaid phone card",
   ];
 
-  const HIGH_RISK_INDUSTRY_KEYWORDS = [
+  const HIGH_RISK_INDUSTRY = [
     "travel agency", "tour operator",
     "money transfer", "money order",
     "precious metals", "gemstone", "jewelry dealer", "jeweler",
@@ -107,7 +107,7 @@ async function evaluateCodeStep(args) {
     };
   }
 
-  var prohibitedKeyword = matchesKeyword(natureOfBusiness, PROHIBITED_INDUSTRY_KEYWORDS);
+  var prohibitedKeyword = matchesKeyword(natureOfBusiness, PROHIBITED_INDUSTRY);
   if (prohibitedKeyword) {
     return {
       risk_score:      999,
@@ -134,7 +134,7 @@ async function evaluateCodeStep(args) {
     if (FORCE_HIGH_RISK.has(tags[j])) { confirmedHighRisk = true; break; }
   }
 
-  var highRiskKeyword = matchesKeyword(natureOfBusiness, HIGH_RISK_INDUSTRY_KEYWORDS);
+  var highRiskKeyword = matchesKeyword(natureOfBusiness, HIGH_RISK_INDUSTRY);
 
   if (confirmedHighRisk || highRiskKeyword) {
     risk_tier = "High Risk";
