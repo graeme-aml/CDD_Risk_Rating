@@ -64,7 +64,8 @@ async function evaluateCodeStep(args) {
     "political organization", "political action committee",
     "bail bond", "bail bondsman",
     "marijuana", "cannabis dispensary", "mrb",
-    "crypto exchange", "virtual asset exchange", "cryptocurrency exchange", "nft marketplace",
+    "crypto exchange", "cryptocurrency exchange", "virtual asset exchange", "virtual currency exchange",
+    "digital asset exchange", "bitcoin exchange", "nft marketplace",
   ];
 
   // --- Fetch Account via Case ---
@@ -84,6 +85,7 @@ async function evaluateCodeStep(args) {
   const country = account && account.attributes && account.attributes.fields && account.attributes.fields.business_physical_address && account.attributes.fields.business_physical_address.value && account.attributes.fields.business_physical_address.value.country_code && account.attributes.fields.business_physical_address.value.country_code.value || "";
 
   const natureOfBusiness = (account && account.attributes && account.attributes.fields && account.attributes.fields.nature_of_business && account.attributes.fields.nature_of_business.value || "").toLowerCase();
+  console.log("natureOfBusiness:", natureOfBusiness);
 
   // --- Helper: case-insensitive phrase match, returns first matched keyword ---
   function matchesKeyword(text, keywords) {
