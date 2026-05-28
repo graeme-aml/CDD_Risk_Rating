@@ -92,7 +92,7 @@ async function evaluateCodeStep(args) {
   });
   console.log("kybTransaction type:", kybTransaction && kybTransaction.type);
 
-  const natureOfBusiness = (kybTransaction && kybTransaction.attributes && kybTransaction.attributes.fields && kybTransaction.attributes.fields.nature_of_business && kybTransaction.attributes.fields.nature_of_business.value || "").toLowerCase();
+  const natureOfBusiness = (kybTransaction && kybTransaction.attributes && kybTransaction.attributes.fields && kybTransaction.attributes.fields["nature of business"] && kybTransaction.attributes.fields["nature of business"].value || "").toLowerCase();
   console.log("natureOfBusiness:", natureOfBusiness);
 
   // --- Helper: case-insensitive phrase match, returns first matched term ---
