@@ -27,7 +27,7 @@ async function evaluateCodeStep(args) {
     "CA", "CO", "OR", "WA", "NV", "MI", "IL",
   ]);
 
-  // Matched against nature_of_business field (case-insensitive phrase match).
+  // Matched against Nature of business field (case-insensitive phrase match).
   // Prohibited is checked before high-risk so that more specific phrases
   // (e.g. "escort agency") take precedence over shorter overlapping terms.
   const PROHIBITED_INDUSTRY = [
@@ -61,11 +61,10 @@ async function evaluateCodeStep(args) {
     "massage parlor",
     "video rental",
     "charitable organization", "charities",
-    "political organization", "political action committee",
-    "bail bond", "bail bondsman",
+    "political organization", "political action committee", "political",
+    "bail bond", "bail bondsman", "bail", "bond",
     "marijuana", "cannabis dispensary", "mrb",
-    "crypto exchange", "cryptocurrency exchange", "virtual asset exchange", "virtual currency exchange",
-    "digital asset exchange", "bitcoin exchange", "nft marketplace",
+    "crypto exchange", "cryptocurrency exchange", "virtual asset exchange", "nft marketplace", "crypto", "cryptocurrency",
   ];
 
   // --- Fetch Account via Case ---
@@ -84,10 +83,19 @@ async function evaluateCodeStep(args) {
   const state   = account && account.attributes && account.attributes.fields && account.attributes.fields.business_physical_address && account.attributes.fields.business_physical_address.value && account.attributes.fields.business_physical_address.value.subdivision && account.attributes.fields.business_physical_address.value.subdivision.value || "";
   const country = account && account.attributes && account.attributes.fields && account.attributes.fields.business_physical_address && account.attributes.fields.business_physical_address.value && account.attributes.fields.business_physical_address.value.country_code && account.attributes.fields.business_physical_address.value.country_code.value || "";
 
-  const natureOfBusiness = (account && account.attributes && account.attributes.fields && account.attributes.fields.nature_of_business && account.attributes.fields.nature_of_business.value || "").toLowerCase();
+  // nature_of_business lives on the KYB transaction, not the account
+  const transactionsList = await persona.transactions.list({ "filter[case_id]": caseId });
+  console.log("transactionsList:", JSON.stringify(transactionsList));
+
+  const kybTransaction = transactionsList && transactionsList.data && transactionsList.data.find(function(t) {
+    return t.type && t.type.indexOf("kyb") !== -1;
+  });
+  console.log("kybTransaction type:", kybTransaction && kybTransaction.type);
+
+  const natureOfBusiness = (kybTransaction && kybTransaction.attributes && kybTransaction.attributes.fields && kybTransaction.attributes.fields.nature_of_business && kybTransaction.attributes.fields.nature_of_business.value || "").toLowerCase();
   console.log("natureOfBusiness:", natureOfBusiness);
 
-  // --- Helper: case-insensitive phrase match, returns first matched keyword ---
+  // --- Helper: case-insensitive phrase match, returns first matched term ---
   function matchesKeyword(text, keywords) {
     for (var k = 0; k < keywords.length; k++) {
       if (text.indexOf(keywords[k]) !== -1) return keywords[k];
@@ -136,9 +144,9 @@ async function evaluateCodeStep(args) {
     if (FORCE_HIGH_RISK.has(tags[j])) { confirmedHighRisk = true; break; }
   }
 
-  var highRiskKeyword = matchesKeyword(natureOfBusiness, HIGH_RISK_INDUSTRY);
+  var highRiskIndustry = matchesKeyword(natureOfBusiness, HIGH_RISK_INDUSTRY);
 
-  if (confirmedHighRisk || highRiskKeyword) {
+  if (confirmedHighRisk || highRiskIndustry) {
     risk_tier = "High Risk";
   } else if (score >= 60) {
     risk_tier = "High Risk";
@@ -153,6 +161,6 @@ async function evaluateCodeStep(args) {
     risk_score:      score,
     risk_tier:       risk_tier,
     requires_review: risk_tier === "High Risk",
-    ...(highRiskKeyword && { triggered_by: "Industry: " + highRiskKeyword }),
+    ...(highRiskIndustry && { triggered_by: "Industry: " + highRiskIndustry }),
   };
 }
